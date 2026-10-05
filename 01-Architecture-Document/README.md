@@ -17,7 +17,7 @@ Diagrams drawn from these addresses:
 | --- | --- | --- | --- |
 | Person | Piyush | Gourav | Alok |
 | Role | Private DNS and Backend B | Edge, nginx, TLS, load balancer | Backend A, test client, Wireshark |
-| IP address | 10.7.17.154 | 10.7.18.35 | 10.7.4.38 |
+| IP address | 10.7.17.154 | 10.7.26.232 | 10.7.22.54 |
 | Subnet mask | 255.255.224.0 | 255.255.224.0 | 255.255.224.0 |
 | Gateway | 10.7.0.1 | 10.7.0.1 | 10.7.0.1 |
 | Interface | en0 | en0 | en0 |
@@ -30,15 +30,15 @@ Diagrams drawn from these addresses:
 
 ```mermaid
 flowchart TD
-    C["Client Mac 3<br/>Alok · 10.7.4.38"]
+    C["Client Mac 3<br/>Alok · 10.7.22.54"]
     D["Mac 1 DNS<br/>Piyush · dnsmasq :53<br/>10.7.17.154"]
-    C2["Client Mac 3<br/>Alok · 10.7.4.38"]
-    N["Mac 2 nginx<br/>Gourav · HTTPS :443<br/>10.7.18.35"]
-    A["Backend A<br/>Mac 3 :3001<br/>10.7.4.38"]
+    C2["Client Mac 3<br/>Alok · 10.7.22.54"]
+    N["Mac 2 nginx<br/>Gourav · HTTPS :443<br/>10.7.26.232"]
+    A["Backend A<br/>Mac 3 :3001<br/>10.7.22.54"]
     B["Backend B<br/>Mac 1 :3002<br/>10.7.17.154"]
 
     C -->|"DNS query app.team1.test"| D
-    D -->|"10.7.18.35 · TTL 60"| C2
+    D -->|"10.7.26.232 · TTL 60"| C2
     C2 -->|"HTTPS / TLS TCP 443"| N
     N --> A
     N --> B
@@ -48,7 +48,7 @@ flowchart TD
 
 1. The client resolver on Mac 3 is `10.7.17.154`.
 2. Mac 3 sends a DNS query for `app.team1.test` to Mac 1 port 53.
-3. dnsmasq matches `address=/app.team1.test/10.7.18.35` and returns an A record with TTL 60.
+3. dnsmasq matches `address=/app.team1.test/10.7.26.232` and returns an A record with TTL 60.
 4. `api.team1.test` is a second name for the same edge address.
 5. Names that are not in the address list are forwarded to `8.8.8.8` and `1.1.1.1` because `no-resolv` ignores the host's own resolv.conf.
 
@@ -56,8 +56,8 @@ flowchart TD
 
 ## HTTPS and TLS flow
 
-1. After the A record is cached, Mac 3 connects to `10.7.18.35` TCP port 443.
-2. The TCP handshake completes: SYN from `10.7.4.38`, SYN-ACK from `10.7.18.35`, ACK from `10.7.4.38`.
+1. After the A record is cached, Mac 3 connects to `10.7.26.232` TCP port 443.
+2. The final live handshake was SYN from `10.7.22.54:58709`, SYN-ACK from `10.7.26.232:443`, ACK from `10.7.22.54:58709`. No packet file of that handshake was saved. The file in `04-Evidence/G-Packet-Capture/` is an earlier capture and uses the DHCP addresses from that night.
 3. The TLS ClientHello carries SNI `app.team1.test`.
 4. nginx selects the certificate whose SAN list contains that name.
 5. The client checks the chain against Team1 Local CA, which is trusted on all three Macs.
@@ -75,12 +75,20 @@ The upstream response, including `X-Backend`, is returned on the client's HTTPS 
 
 ## Backend flow
 
-| Request | Backend A `10.7.4.38:3001` | Backend B `10.7.17.154:3002` |
+| Request | Backend A `10.7.22.54:3001` | Backend B `10.7.17.154:3002` |
 | --- | --- | --- |
 | `GET /` | JSON greeting, `X-Backend: A` | JSON greeting, `X-Backend: B` |
 | `GET /api/status` | `status: ok` and identity A | `status: ok` and identity B |
 | `GET /api/cached` | `Cache-Control: max-age=60`, stable `ETag` | Same body and `ETag`, header `X-Backend: B` |
 
-The upstream uses round-robin. The counted lab series of eight requests returned `X-Backend` in this order: B, A, B, A, B, A, B, A.
+The upstream uses round-robin. The final verified series of six HTTPS requests returned `X-Backend` in this order: A, B, A, B, A, B. No screenshot of that series was saved.
 
-If Backend A refuses connections, `max_fails=1` and `proxy_next_upstream` send the request to Backend B. If both refuse, nginx still completes TLS and returns `502 Bad Gateway`.
+## Failure Demonstration — Backend A Failover
+
+Before Backend A was stopped, six requests returned A, B, A, B, A, B.
+
+Backend A on Mac 3 (`10.7.22.54:3001`) was then stopped. The next six requests all returned `X-Backend: B`.
+
+Backend A was restarted. The following six requests returned B, B, A, B, A, B, so both backends were answering again.
+
+No screenshot of this demonstration was saved. An older nginx log in `04-Evidence/H-Failure-Scenarios/` records a different night, when Backend A was `10.7.4.38:3001`. That log does not contain `X-Backend`.

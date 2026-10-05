@@ -1,6 +1,6 @@
 # Raw extra
 
-These are real screenshots from the same Wireshark session. They are weaker or repeated views, so they are not the primary evidence files.
+These are real screenshots from the same historical Wireshark session. Addresses such as `10.7.18.35` are capture-time DHCP values. They are weaker or repeated views, so they are not the primary evidence files.
 
 | File | Why it is here |
 | --- | --- |

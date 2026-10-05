@@ -1,6 +1,6 @@
 # Mac 3 — Alok — Backend A, test client, Wireshark
 
-Address `10.7.4.38`, mask `255.255.224.0`, gateway `10.7.0.1`, interface `en0`, MAC `72:36:67:c5:54:98`.
+Address `10.7.22.54`, mask `255.255.224.0`, gateway `10.7.0.1`, interface `en0`, MAC `72:36:67:c5:54:98`.
 
 This Mac is the client. There is no fourth Mac.
 

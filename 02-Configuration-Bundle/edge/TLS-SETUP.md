@@ -129,7 +129,7 @@ The lab check succeeded without `curl -k`. The client accepted the chain because
 
 nginx allows both versions (`ssl_protocols TLSv1.2 TLSv1.3`). HTTP/2 is enabled on the same listener (`http2 on`).
 
-**TLS 1.3** is what a current client negotiates. The visible handshake is ClientHello (with SNI `app.team1.test`) and ServerHello. The Certificate message and the HTTP request are encrypted. Wireshark shows those later records as TLS Application Data between `10.7.4.38` and `10.7.18.35`.
+**TLS 1.3** is what a current client negotiates. The visible handshake is ClientHello (with SNI `app.team1.test`) and ServerHello. The Certificate message and the HTTP request are encrypted. The final live test negotiated TLS 1.3 between `10.7.22.54` and `10.7.26.232:443`. The saved Wireshark screenshots are older: they show Application Data between the capture-time addresses `10.7.4.38` and `10.7.18.35`.
 
 **TLS 1.2** leaves the Certificate handshake message in the clear. A forced TLS 1.2 capture was used to read the issuer `Team1 Local CA` and the subject `app.team1.test`. The same certificate and the same CA are used for both versions. The difference is what the capture can display, not which name the certificate covers.
 

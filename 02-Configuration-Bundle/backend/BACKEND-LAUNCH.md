@@ -4,7 +4,7 @@ Both backends run the same program, `03-Source-Code/backend/server.py`. The `--i
 
 | Backend | Mac | Person | Command | Address |
 | --- | --- | --- | --- | --- |
-| A | Mac 3 | Alok | `./start-backend.sh A` | 10.7.4.38:3001 |
+| A | Mac 3 | Alok | `./start-backend.sh A` | 10.7.22.54:3001 |
 | B | Mac 1 | Piyush | `./start-backend.sh B` | 10.7.17.154:3002 |
 
 From `03-Source-Code/backend`:
@@ -33,6 +33,6 @@ The process listens on `0.0.0.0`. Stop it with Ctrl-C.
 Check from another Mac:
 
 ```bash
-curl -i http://10.7.4.38:3001/api/status
+curl -i http://10.7.22.54:3001/api/status
 curl -i http://10.7.17.154:3002/api/status
 ```

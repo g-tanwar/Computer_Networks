@@ -18,16 +18,16 @@ The server certificate, CSR, and SAN file are in `03-Source-Code/edge/ca-public/
 
 `dns/dnsmasq.conf` maps both names to the edge server:
 
-- `app.team1.test` → `10.7.18.35`
-- `api.team1.test` → `10.7.18.35`
+- `app.team1.test` → `10.7.26.232`
+- `api.team1.test` → `10.7.26.232`
 
-TTL is 60 seconds. Forwarders are `8.8.8.8` and `1.1.1.1`. The live dnsmasq process runs on Mac 1. This file is the configuration that was verified in the lab. The temporary test address `10.7.31.250` is not in it.
+TTL is 60 seconds. dnsmasq listens on `0.0.0.0`, interface `en0`. Forwarders are `8.8.8.8` and `1.1.1.1`. The live process runs on Mac 1. The temporary test address `10.7.31.250` is not in this file.
 
 ## nginx
 
-`edge/nginx-servers-team1.conf` is a byte-for-byte copy of `/opt/homebrew/etc/nginx/servers/team1.conf` from Mac 2 (nginx 1.31.6).
+`edge/nginx-servers-team1.conf` matches the final live nginx site on Mac 2 (nginx 1.31.6).
 
-- Backend A: `10.7.4.38:3001`
+- Backend A: `10.7.22.54:3001`
 - Backend B: `10.7.17.154:3002`
 - HTTPS port 443
 - `server_name app.team1.test api.team1.test`

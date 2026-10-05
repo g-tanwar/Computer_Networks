@@ -1,8 +1,8 @@
 # Mac 2 — Gourav — edge, nginx, TLS
 
-Address `10.7.18.35`, mask `255.255.224.0`, gateway `10.7.0.1`, interface `en0`, MAC `e6:09:91:27:22:3b`.
+Address `10.7.26.232`, mask `255.255.224.0`, gateway `10.7.0.1`, interface `en0`, MAC `e6:09:91:27:22:3b`.
 
-nginx 1.31.6 listens on TCP 443 with TLS 1.2, TLS 1.3, and HTTP/2. The site file is `02-Configuration-Bundle/edge/nginx-servers-team1.conf`. It is the file that was running at `/opt/homebrew/etc/nginx/servers/team1.conf`.
+nginx 1.31.6 listens on TCP 443 with TLS 1.2, TLS 1.3, and HTTP/2. The site file is `02-Configuration-Bundle/edge/nginx-servers-team1.conf`. It matches the final live upstreams. An earlier capture used a different DHCP address for this Mac.
 
 ## Certificates
 
@@ -36,7 +36,7 @@ The config expects:
 - `/Users/gouravtanwar/cn-certs/app.crt`
 - `/Users/gouravtanwar/cn-certs/app.key`
 
-Upstreams are `10.7.4.38:3001` and `10.7.17.154:3002`.
+Upstreams are `10.7.22.54:3001` and `10.7.17.154:3002`.
 
 ## Trust the CA on this Mac
 

@@ -2,6 +2,8 @@
 
 Capture machine: Mac 3, interface `en0`. The file `phase1_full_flow.pcapng` is the original lab capture. It was copied here unchanged.
 
+These files are historical. The DHCP addresses inside them are capture-time values: client and Backend A `10.7.4.38`, edge `10.7.18.35`, DNS `10.7.17.154`. The final live addresses are `10.7.22.54`, `10.7.26.232`, and `10.7.17.154`. No capture of the final session is in this folder.
+
 | Status | File | What it proves |
 | --- | --- | --- |
 | AVAILABLE | `phase1_full_flow.pcapng` | 2937-packet capture from the lab session |

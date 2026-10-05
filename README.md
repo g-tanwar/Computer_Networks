@@ -24,15 +24,15 @@ Three physical Macs share the work. Mac 1 runs DNS and Backend B. Mac 3 runs Bac
 
 ```mermaid
 flowchart TD
-    C["Client Mac 3<br/>Alok · 10.7.4.38"]
+    C["Client Mac 3<br/>Alok · 10.7.22.54"]
     D["Mac 1 DNS<br/>Piyush · dnsmasq :53<br/>10.7.17.154"]
-    C2["Client Mac 3<br/>Alok · 10.7.4.38"]
-    N["Mac 2 nginx<br/>Gourav · HTTPS :443<br/>10.7.18.35"]
-    A["Backend A<br/>Mac 3 :3001<br/>10.7.4.38"]
+    C2["Client Mac 3<br/>Alok · 10.7.22.54"]
+    N["Mac 2 nginx<br/>Gourav · HTTPS :443<br/>10.7.26.232"]
+    A["Backend A<br/>Mac 3 :3001<br/>10.7.22.54"]
     B["Backend B<br/>Mac 1 :3002<br/>10.7.17.154"]
 
     C -->|"DNS query app.team1.test"| D
-    D -->|"10.7.18.35 · TTL 60"| C2
+    D -->|"10.7.26.232 · TTL 60"| C2
     C2 -->|"HTTPS / TLS TCP 443"| N
     N --> A
     N --> B
@@ -52,16 +52,16 @@ Interface on every Mac: `en0`
 | Machine | Person | IP address | MAC address | Services |
 | --- | --- | --- | --- | --- |
 | Mac 1 | Piyush | 10.7.17.154 | 10:9f:41:c0:9e:e5 | dnsmasq UDP/TCP 53, Backend B TCP 3002 |
-| Mac 2 | Gourav | 10.7.18.35 | e6:09:91:27:22:3b | nginx HTTPS 443, TLS 1.2 and TLS 1.3, HTTP/2 |
-| Mac 3 | Alok | 10.7.4.38 | 72:36:67:c5:54:98 | Backend A TCP 3001, curl/dig, Wireshark on en0 |
+| Mac 2 | Gourav | 10.7.26.232 | e6:09:91:27:22:3b | nginx HTTPS 443, TLS 1.2 and TLS 1.3, HTTP/2 |
+| Mac 3 | Alok | 10.7.22.54 | 72:36:67:c5:54:98 | Backend A TCP 3001, curl/dig, Wireshark on en0 |
 
 ## Request flow
 
 1. Mac 3 asks Mac 1 (`10.7.17.154`) for `app.team1.test`.
-2. dnsmasq answers with `10.7.18.35` and a TTL of 60 seconds. `api.team1.test` uses the same address.
+2. dnsmasq answers with `10.7.26.232` and a TTL of 60 seconds. `api.team1.test` uses the same address.
 3. Mac 3 opens TCP port 443 on Mac 2. The handshake is SYN, SYN-ACK, ACK.
 4. Mac 2 presents the server certificate for `app.team1.test`, issued by Team1 Local CA. The certificate also lists `api.team1.test` as a subject alternative name.
-5. nginx terminates TLS and proxies the request over plain HTTP to Backend A (`10.7.4.38:3001`) or Backend B (`10.7.17.154:3002`).
+5. nginx terminates TLS and proxies the request over plain HTTP to Backend A (`10.7.22.54:3001`) or Backend B (`10.7.17.154:3002`).
 6. The chosen backend sets `X-Backend: A` or `X-Backend: B`. nginx returns that response on the existing HTTPS connection.
 
 ## DNS architecture
@@ -70,8 +70,8 @@ Mac 1 is the only resolver that knows the team names. The client Macs use `10.7.
 
 | Name | Type | Address | TTL |
 | --- | --- | --- | --- |
-| app.team1.test | A | 10.7.18.35 | 60 |
-| api.team1.test | A | 10.7.18.35 | 60 |
+| app.team1.test | A | 10.7.26.232 | 60 |
+| api.team1.test | A | 10.7.26.232 | 60 |
 
 dnsmasq is configured with `domain-needed`, `bogus-priv`, and `no-resolv`. Unknown names are forwarded to `8.8.8.8` and `1.1.1.1`. Queries are logged to `/tmp/dnsmasq.log`. The file is [02-Configuration-Bundle/dns/dnsmasq.conf](02-Configuration-Bundle/dns/dnsmasq.conf).
 
@@ -83,7 +83,7 @@ Both backends run [03-Source-Code/backend/server.py](03-Source-Code/backend/serv
 
 | Backend | Host | Listen address |
 | --- | --- | --- |
-| A | Mac 3 (Alok) | 10.7.4.38:3001 |
+| A | Mac 3 (Alok) | 10.7.22.54:3001 |
 | B | Mac 1 (Piyush) | 10.7.17.154:3002 |
 
 | Method and path | Behavior |
@@ -113,13 +113,13 @@ nginx decrypts the client request and opens a new HTTP connection to the selecte
 The upstream block lists Backend A first and Backend B second, with no explicit weights, so nginx uses its default round-robin policy:
 
 ```
-10.7.4.38:3001
+10.7.22.54:3001
 10.7.17.154:3002
 ```
 
 Each upstream has `max_fails=1` and `fail_timeout=10s`. If a backend does not accept a connection, nginx marks it unavailable and sends the request to the other one.
 
-Round-robin load balancing was tested during the lab session using eight consecutive HTTPS requests and produced alternating Backend A/B responses. The original terminal screenshot/output was not retained in the final evidence bundle. The nginx configuration is the retained record of the two-backend upstream pool.
+The final verified series was six consecutive HTTPS requests. `X-Backend` came back A, B, A, B, A, B. No screenshot of that series was saved. The nginx file is the retained record of the two-backend pool.
 
 ## TLS and HTTPS
 
@@ -145,53 +145,58 @@ nginx advertises HTTP/2 on port 443 (`http2 on`). Successful HTTPS requests to `
 
 A follow-up request that sends that value in `If-None-Match` receives `304 Not Modified` and an empty body.
 
-The surviving nginx log proves the 304 response. The original terminal output containing the Cache-Control and ETag headers was not retained. On 4 Oct 2026 the Mac 2 access log records `GET /api/cached HTTP/2.0` status `200` at 01:58:33 and status `304` at 01:59:10, from client `10.7.4.38`. That log does not store `Cache-Control` or `ETag`. The file is [04-Evidence/F-HTTP-Caching/mac2_nginx_access.log](04-Evidence/F-HTTP-Caching/mac2_nginx_access.log).
+The final live response from `https://app.team1.test/api/cached` was HTTP/2 200 from nginx 1.31.6, `content-type: application/json`, `content-length: 51`, `x-backend: B`, `cache-control: max-age=60`, and `etag: "a8975e0e7afcd001cfc2938f7a0feecb"`. That header transcript was not saved as a file. This observed ETag is the live result. The checked-in `server.py` also sends `Cache-Control: max-age=60` and an ETag, and it returns 304 when `If-None-Match` matches, but its cached document is a different body, so its ETag is not that live value.
+
+An older access log, from 4 Oct 2026, records `GET /api/cached HTTP/2.0` status `200` at 01:58:33 and status `304` at 01:59:10. The client address in that log is the capture-time address `10.7.4.38`. The log does not store `Cache-Control` or `ETag`. The file is [04-Evidence/F-HTTP-Caching/mac2_nginx_access.log](04-Evidence/F-HTTP-Caching/mac2_nginx_access.log).
 
 ## Wireshark packet analysis
 
-Capture was taken on Mac 3, interface `en0`, and saved as `phase1_full_flow.pcapng`. That file and the Wireshark screenshots are in [04-Evidence/G-Packet-Capture](04-Evidence/G-Packet-Capture). The capture shows:
+The final live test on Mac 3 (`en0`) showed:
 
-1. DNS query from Mac 3 to Mac 1 for `app.team1.test`.
-2. DNS response from Mac 1 to Mac 3: `app.team1.test` → `10.7.18.35`.
-3. TCP three-way handshake (SYN, SYN-ACK, ACK) between `10.7.4.38` and `10.7.18.35:443`.
-4. TLS ClientHello with SNI `app.team1.test`.
-5. TLS ServerHello.
-6. A TLS 1.2 Certificate handshake. Issuer: Team1 Local CA. Subject: `app.team1.test`.
-7. TLS 1.3 encrypted handshake traffic.
-8. TLS Application Data between `10.7.4.38` and `10.7.18.35`.
+1. DNS query `10.7.22.54` to `10.7.17.154` UDP/53 for `app.team1.test` A.
+2. Response `10.7.26.232`, TTL 60.
+3. TCP handshake `10.7.22.54:58709` to `10.7.26.232:443`: SYN, SYN-ACK, ACK.
+4. ClientHello with SNI `app.team1.test`, TLS 1.3 negotiated.
+5. Later HTTP was encrypted TLS Application Data.
 
-TLS 1.3 encrypts the Certificate message, so the issuer and subject were read from a TLS 1.2 handshake. Application data after the handshake is encrypted on the path from the client to nginx.
+No packet file of that test was saved.
+
+The file `phase1_full_flow.pcapng` and the screenshots in [04-Evidence/G-Packet-Capture](04-Evidence/G-Packet-Capture) are historical. Their DHCP addresses are capture-time values: client `10.7.4.38`, edge `10.7.18.35`, DNS `10.7.17.154`. That capture shows the same stages — DNS answer, TCP handshake, ClientHello SNI, a TLS 1.2 certificate from Team1 Local CA, and encrypted Application Data. TLS 1.3 encrypts the Certificate message, so the issuer and subject were read from the TLS 1.2 handshake in that older capture.
 
 ## Failure scenarios
 
-Each failure was temporary. DNS and both backends were restored afterward. Retained server logs are in [04-Evidence/H-Failure-Scenarios](04-Evidence/H-Failure-Scenarios).
+`dig @8.8.8.8 app.team1.test` returned NXDOMAIN in the final test. No screenshot was saved.
 
-| Scenario | What changed | What happened | Retained file |
-| --- | --- | --- | --- |
-| Wrong DNS server | Mac 3 resolver set to `8.8.8.8` | `dig app.team1.test` returned NXDOMAIN, `ANSWER: 0`, `SERVER: 8.8.8.8#53` | Not retained |
-| Wrong DNS record | `app.team1.test` temporarily answered `10.7.31.250` | `dig` returned `app.team1.test 60 IN A 10.7.31.250`. `curl` to `https://app.team1.test/api/status` timed out connecting to `10.7.31.250:443` | Not retained |
-| One backend down | Backend A stopped | At 01:52:30 nginx could not connect to `10.7.4.38:3001` and the access log recorded HTTP/2.0 `200`. This provides server-side evidence that Backend A was unavailable while nginx continued serving the request successfully through the upstream pool. The log does not contain `X-Backend` | `mac2_nginx_error.log`, `mac2_nginx_access.log` |
-| Both backends down | Backend A and Backend B stopped | Around 01:56 both `10.7.4.38:3001` and `10.7.17.154:3002` refused connections, then the access log recorded HTTP/2.0 `502` | same logs |
-| Wrong port | `curl -v https://app.team1.test:4443` | DNS still returned `10.7.18.35`. TCP to port 4443 returned `Connection refused` | Not retained |
+An earlier wrong-record test temporarily answered `10.7.31.250` and the HTTPS connection timed out. The record was restored. The checked-in `dnsmasq.conf` answers `10.7.26.232`. No screenshot of that test was saved.
 
-The restored DNS record is `app.team1.test` → `10.7.18.35`. That is the address in `dnsmasq.conf`.
+An earlier wrong-port test to `https://app.team1.test:4443` resolved and then returned `Connection refused`. No screenshot was saved. The historical notes of that test used the capture-time edge address `10.7.18.35`.
+
+Older nginx logs in [04-Evidence/H-Failure-Scenarios](04-Evidence/H-Failure-Scenarios) are historical. At 01:52:30 they show a refused connection to capture-time Backend A `10.7.4.38:3001` while the access log recorded HTTP/2.0 `200`. Around 01:56 both `10.7.4.38:3001` and `10.7.17.154:3002` refused connections and the access log recorded HTTP/2.0 `502`. Those logs do not contain `X-Backend`.
+
+## Failure Demonstration — Backend A Failover
+
+Before failure, six requests returned `x-backend` A, B, A, B, A, B.
+
+Backend A on Mac 3 (`10.7.22.54:3001`) was stopped. During the failure, six requests returned `x-backend` B, B, B, B, B, B. nginx kept serving through the healthy backend.
+
+Backend A was restarted. The next six requests returned B, B, A, B, A, B. Both backends were available again.
+
+No screenshot of this demonstration was saved.
 
 ## Test results
 
-These checks were completed on the lab LAN.
+Final live checks. A screenshot or capture was not saved for this session unless the evidence column names a file.
 
 | # | Test | Result | Evidence in this repo |
 | --- | --- | --- | --- |
-| 1 | DNS resolution | `app.team1.test` resolved to `10.7.18.35` from server `10.7.17.154` with TTL 60 | Available: pcap and G2. The `dig` screenshot was not retained |
-| 2 | HTTPS/TLS | Certificate verification succeeded. `curl -k` was not used | Available: E1 |
-| 3 | HTTP/2 | The HTTPS response used HTTP/2 | Available: E1, and HTTP/2.0 lines in the nginx access log |
-| 4 | Load balancing | Eight requests returned `X-Backend` in this order: B, A, B, A, B, A, B, A | Configuration available. The eight-line screenshot was not retained |
-| 5 | One backend failure | Backend A was unreachable and nginx still returned HTTP/2.0 `200` | Available: nginx logs at 01:52:30. The log does not name `X-Backend` |
-| 6 | Both backends failure | nginx recorded HTTP/2.0 `502` after both upstreams refused the connection | Available: nginx logs around 01:56 |
-| 7 | HTTP caching | `/api/cached` sent `Cache-Control: max-age=60` and an `ETag`. The same `ETag` in `If-None-Match` produced `304 Not Modified` | The `304` is in the access log. The header text was not retained |
-| 8 | Wrong port | Name resolution succeeded and TCP port 4443 returned `Connection refused` | Not retained |
-| 9 | Wrong DNS server | `8.8.8.8` returned NXDOMAIN with `ANSWER: 0` | Not retained |
-| 10 | Wrong DNS record | The temporary address `10.7.31.250` resolved, then the HTTPS connection timed out. The record was restored to `10.7.18.35` | Not retained |
+| 1 | DNS resolution | `app.team1.test` resolved to `10.7.26.232` from server `10.7.17.154`, TTL 60 | Final transcript not saved. Historical pcap and G2 show the same name resolving to capture-time `10.7.18.35` |
+| 2 | Public DNS isolation | `dig @8.8.8.8 app.team1.test` returned NXDOMAIN | Not retained |
+| 3 | HTTPS/TLS | Verification succeeded without `-k`. SAN `app.team1.test`. Issuer Team1 Local CA. TLS 1.3. HTTP/2 200 | Final transcript not saved. Historical E1 shows verification, HTTP/2 200, and `x-backend: B` |
+| 4 | Load balancing | Six requests returned `X-Backend` A, B, A, B, A, B | Configuration file only. The series was not saved |
+| 5 | Backend A failover | While `10.7.22.54:3001` was stopped, six requests returned B. After restart the series was B, B, A, B, A, B | Not retained. Historical nginx logs show an earlier failover without `X-Backend` |
+| 6 | HTTP caching | HTTP/2 200, `cache-control: max-age=60`, `etag: "a8975e0e7afcd001cfc2938f7a0feecb"`, `x-backend: B` | Header text not saved. Historical access log shows a `304` on `/api/cached` |
+| 7 | Both backends down | Historical nginx log recorded HTTP/2.0 `502` | Available in the 4 Oct logs. Not repeated as a new file |
+| 8 | Wrong port 4443 | Earlier test: name resolved, then connection refused | Not retained |
 
 ## Repository structure
 
@@ -297,7 +302,7 @@ dig @10.7.17.154 app.team1.test
 
 curl -v https://app.team1.test/api/status
 
-for i in {1..8}; do
+for i in {1..6}; do
   curl -s -D - -o /dev/null https://app.team1.test/api/status | grep -i x-backend
 done
 
@@ -312,7 +317,7 @@ openssl x509 -in 03-Source-Code/edge/ca-public/app.crt -noout -subject -issuer -
 Direct backend checks, bypassing the proxy:
 
 ```bash
-curl -i http://10.7.4.38:3001/api/status
+curl -i http://10.7.22.54:3001/api/status
 curl -i http://10.7.17.154:3002/api/status
 ```
 

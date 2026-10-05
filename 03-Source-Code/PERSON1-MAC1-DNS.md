@@ -13,8 +13,10 @@ sudo dnsmasq -C /opt/homebrew/etc/dnsmasq.conf
 The installed file must keep:
 
 ```
-address=/app.team1.test/10.7.18.35
-address=/api.team1.test/10.7.18.35
+listen-address=0.0.0.0
+interface=en0
+address=/app.team1.test/10.7.26.232
+address=/api.team1.test/10.7.26.232
 local-ttl=60
 ```
 
