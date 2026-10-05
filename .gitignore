@@ -1,0 +1,22 @@
+# Private keys. Never commit these.
+*.key
+teamCA.key
+app.key
+
+# Duplicate raw uploads. Canonical evidence is under 04-Evidence/.
+incoming-evidence/
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Secrets and local environment
+.env
+.env.*
+
+# Editors
+.vscode/
+.idea/

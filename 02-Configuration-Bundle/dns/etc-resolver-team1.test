@@ -1,0 +1,3 @@
+# Install on a client Mac as /etc/resolver/team1.test
+# so names under team1.test are asked of Mac 1 only.
+nameserver 10.7.17.154
