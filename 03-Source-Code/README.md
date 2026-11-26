@@ -1,6 +1,6 @@
 # Source code
 
-Scripts and the backend for the three-Mac lab. Addresses come from [team.env](team.env). Role notes:
+Scripts and the backend for the lab (three Macs in Phase 1, four in Phase 2). Addresses come from [team.env](team.env). Role notes:
 
 - [PERSON1-MAC1-DNS.md](PERSON1-MAC1-DNS.md) — Piyush, DNS and Backend B
 - [PERSON2-MAC2-EDGE.md](PERSON2-MAC2-EDGE.md) — Gourav, nginx and TLS
@@ -14,6 +14,7 @@ Scripts and the backend for the three-Mac lab. Addresses come from [team.env](te
 | [lib.sh](lib.sh) | Loads `team.env` for the other scripts |
 | `common/` | DNS switch, CA trust, ping, load-balance, cache, diagnose, capture |
 | `dns/` | Install dnsmasq, and the temporary wrong-record test |
+| [`team/`](team) | One script per person for Phase 1 + Phase 2: `piyush-mac1.sh`, `gourav-mac2.sh`, `alok-mac3.sh`, `ashar-mac4.sh` (shared helpers in `common.sh`). Run one with no arguments for its menu |
 | `edge/` | Create certificates, install nginx, copy the public CA |
 | [edge/ca-public](edge/ca-public) | `team1-root-ca.crt`, `app.crt`, `app.csr`, `app.ext` |
 

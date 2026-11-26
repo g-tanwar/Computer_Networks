@@ -42,6 +42,6 @@ Status values:
 | Failure | Wrong port 4443 / connection refused | NOT RETAINED | — | The test was performed. The original screenshot was not retained |
 | Backends | Direct curl to `:3001` and `:3002` | NOT RETAINED | — | The direct backend checks were performed. The original output was not retained |
 | LAN | Ping and netinfo | OPTIONAL | [A-LAN-Setup](A-LAN-Setup) | No ping or interface transcript was kept |
-| Notes | Troubleshooting write-up | OPTIONAL | [I-Troubleshooting-Notes](I-Troubleshooting-Notes) | No separate incident note |
+| Notes | Troubleshooting write-up | AVAILABLE | [I-Troubleshooting-Notes](I-Troubleshooting-Notes/README.md) | Ten problems from the 25–26 Nov rebuild, each with layer, cause and fix |
 | Capture | Extra Wireshark views | AVAILABLE | [_raw-extra](_raw-extra) | Real screenshots from the same session. Weaker or repeated views, not primary evidence |
 | Capture | Alternate pcap filenames G0 and G1 | OPTIONAL | — | `phase1_full_flow.pcapng` is the lab capture |

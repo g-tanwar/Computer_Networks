@@ -4,6 +4,8 @@
 
 Team 1 built a private web service across three physical Macs on one Wi-Fi LAN. A private DNS server publishes two hostnames. An edge Mac terminates HTTPS, speaks HTTP/2, and reverse-proxies requests to two backends with round-robin load balancing and failover. The backends support HTTP caching with `Cache-Control` and `ETag` validation. Packet captures on the client Mac show DNS, the TCP handshake, and TLS.
 
+**Phase 2:** Ashar Shaikh joined with a fourth Mac. Who did what, the current IP addresses and each person's script are in [TEAM-WORK-LOG.md](TEAM-WORK-LOG.md).
+
 This repository holds the architecture notes, the configuration that was used, the backend program, and the lab evidence that was retained. The index is [04-Evidence/EVIDENCE-INDEX.md](04-Evidence/EVIDENCE-INDEX.md). A file is marked available only when it is in the tree. Tests whose original screenshots were not kept are marked not retained. The written report in `docs/` is not packet evidence.
 
 ## Team members and roles
